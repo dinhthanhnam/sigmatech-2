@@ -1,7 +1,6 @@
 [project]
 name = "api"
 version = "0.1.0"
-package-mode = false
 description = ""
 authors = [
     {name = "Nam Dinh Thanh",email = "thanhnamak@gmail.com"}
@@ -13,8 +12,13 @@ dependencies = [
     "sqlmodel (>=0.0.27,<0.0.28)",
     "pydash (>=8.0.5,<9.0.0)",
     "alembic (>=1.17.0,<2.0.0)",
-    "uvicorn (>=0.38.0,<0.39.0)"
+    "uvicorn (>=0.38.0,<0.39.0)",
+    "pydantic-settings (>=2.11.0,<3.0.0)",
+    "pymysql (>=1.1.2,<2.0.0)"
 ]
+
+[tool.poetry]
+package-mode = false
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
