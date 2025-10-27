@@ -2,8 +2,6 @@ from logging.config import fileConfig
 
 
 from alembic import context
-from alembic.autogenerate import renderers
-from sqlmodel.sql import sqltypes
 from db import engine
 from models import SQLModel
 
