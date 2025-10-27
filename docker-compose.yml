@@ -10,6 +10,7 @@ services:
       - db
     volumes:
       - ./api:/var/app
+    working_dir: /var/app
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/sigmatech
 
@@ -24,6 +25,7 @@ services:
       - api
     volumes:
       - ./web:/var/app
+    working_dir: /var/app
 
   db:
     image: postgres:17
