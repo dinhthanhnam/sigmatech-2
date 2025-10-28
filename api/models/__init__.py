@@ -1,2 +1,2 @@
-from pydantic import BaseModel
-
+from .user import User
+from .post import Post

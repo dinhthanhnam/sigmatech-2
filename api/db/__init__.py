@@ -6,7 +6,7 @@ from sqlmodel import create_engine, Session
 from core.config import settings
 
 
-engine = create_engine(settings.database_url, echo=True)
+engine = create_engine(settings.database_url, echo=True) #type: ignore
 
 
 def get_session():
