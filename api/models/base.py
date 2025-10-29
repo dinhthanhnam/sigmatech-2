@@ -3,6 +3,7 @@ from typing import Optional, Type, TypeVar, Sequence, Generic
 from sqlalchemy.orm import selectinload
 from contextlib import contextmanager
 from db import engine
+from datetime import datetime, UTC
 
 
 T = TypeVar("T", bound="Base")
@@ -14,19 +15,39 @@ def get_session():
         yield session
 
 
-class Base(SQLModel):
+class Base(SQLModel, table=False):
     id: Optional[int] = Field(default=None, primary_key=True)
+    created_at: datetime = Field(default=datetime.now(UTC))
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
 
     # Main query builder helper
     @classmethod
-    def find(cls: Type[T], sess: Session | None = None):
+    def query(cls: Type[T], sess: Session | None = None):
         sess = sess or Session(engine)
         return QueryBuilder(cls, sess)
 
     # Helper for service layer
     @classmethod
-    def find_by_pk(cls: Type[T], pk: int):
-        return cls.find().where(cls.id == pk).first()
+    def find_by_id(cls: Type[T], id: int):
+        return cls.query().where(cls.id == id).first()
+    
+    # CRUD shortcut dùng QueryBuilder
+    @classmethod
+    def create(cls: Type[T], data: SQLModel | dict):
+        return cls.query().create(data)
+
+    @classmethod
+    def create_many(cls: Type[T], data_list: list[dict]):
+        return cls.query().create_many(data_list)
+
+    @classmethod
+    def update(cls: Type[T], id: int, data: dict):
+        return cls.query().where(cls.id == id).update(data)
+
+    @classmethod
+    def update_many(cls: Type[T], filters: list, data: dict):
+        return cls.query().where(*filters).update_many(data)
 
 
 class QueryBuilder(Generic[T]):
@@ -53,6 +74,50 @@ class QueryBuilder(Generic[T]):
         subquery = condition_func(rel_model)
         self._filters.append(getattr(self.model, relation).any(subquery))
         return self
+    
+    # ---- CRUD ----
+
+    def create(self, data: SQLModel | dict) -> T:
+        payload = data.model_dump() if isinstance(data, SQLModel) else data
+        instance = self.model(**payload)
+        self.session.add(instance)
+        self.session.commit()
+        self.session.refresh(instance)
+        return instance
+
+    def create_many(self, data_list: list[dict]) -> list[T]:
+        instances = [self.model(**data) for data in data_list]
+        self.session.add_all(instances)
+        self.session.commit()
+        for inst in instances:
+            self.session.refresh(inst)
+        return instances
+
+    def update(self, data: dict) -> Optional[T]:
+        stmt = select(self.model).where(*self._filters)
+        obj = self.session.exec(stmt).first()
+        if not obj:
+            return None
+        for key, value in data.items():
+            if hasattr(obj, key):
+                setattr(obj, key, value)
+        obj.updated_at = datetime.now(UTC)
+        self.session.commit()
+        self.session.refresh(obj)
+        return obj
+
+    def update_many(self, data: dict) -> int:
+        stmt = select(self.model).where(*self._filters)
+        results = self.session.exec(stmt).all()
+        for obj in results:
+            for key, value in data.items():
+                if hasattr(obj, key):
+                    setattr(obj, key, value)
+            obj.updated_at = datetime.now(UTC)
+        self.session.commit()
+        return len(results)
+
+    # ---- Query ----
 
     # all()
     def all(self) -> Sequence[T]:

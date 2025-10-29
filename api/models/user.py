@@ -4,24 +4,15 @@ from typing import Optional, List
 from .base import Base
 
 
-class UserBase(Base):
+class User(Base, table=True):
+    __tablename__ = "users" # type: ignore
+    
     username: str
     email: Optional[str] = None
-
-
-class User(UserBase, table=True):
     hashed_password: str
     is_active: bool = True
     is_superuser: bool = False
-    created_at: datetime = Field(default=datetime.now(UTC))
 
-    posts: List["Post"] = Relationship(back_populates="author") #type: ignore
-
-
-class UserCreate(UserBase):
-    password: str
+    posts: List["Post"] = Relationship(back_populates="author") # type: ignore
 
 
-class UserRead(UserBase):
-    is_active: bool
-    is_superuser: bool
