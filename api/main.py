@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware import Middleware
-from routes.crud.user import router as user_crud_router
+from routes import user_crud_router
+from models.user import User
 
 
 app = FastAPI()
@@ -12,3 +13,5 @@ app.include_router(
 @app.get("/")
 def hello():
     return { "message": "Hello world" }
+
+User.create({"username": "nam", "email": "nam@sigmatech.vn", "hashed_password": "123213"})
