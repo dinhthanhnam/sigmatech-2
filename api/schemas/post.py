@@ -2,8 +2,14 @@ from typing import Optional
 from .user import UserRead
 from .base import BaseSchema
 
+
 class Post(BaseSchema):
     id: int
+    title: str
+    content: str
+
+
+class PostCreate(BaseSchema):
     title: str
     content: str
 

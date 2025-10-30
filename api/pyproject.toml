@@ -14,7 +14,8 @@ dependencies = [
     "alembic (>=1.17.0,<2.0.0)",
     "uvicorn (>=0.38.0,<0.39.0)",
     "pydantic-settings (>=2.11.0,<3.0.0)",
-    "pymysql (>=1.1.2,<2.0.0)"
+    "pymysql (>=1.1.2,<2.0.0)",
+    "python-i18n[yaml] (>=0.3.9,<0.4.0)",
 ]
 
 [tool.poetry]

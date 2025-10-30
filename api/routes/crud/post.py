@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from schemas.post import PostRead
-from services.impl.user_service_impl import user_service
+from services.impl.post_service_impl import post_service
 from typing import List
 
 
@@ -9,4 +9,9 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 
 @router.get(path='/',response_model=List[PostRead])
 def index():
-    return user_service.get_all_user()
+    return post_service.get_all_posts()
+
+
+@router.post(path='/',response_model=List[PostRead])
+def store():
+    return post_service.get_all_posts()

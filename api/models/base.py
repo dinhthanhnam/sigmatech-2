@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel, Field, select, Session
+from sqlmodel import SQLModel, Field, select, Session, delete
 from typing import Optional, Type, TypeVar, Sequence, Generic
 from sqlalchemy.orm import selectinload
 from contextlib import contextmanager
@@ -42,12 +42,20 @@ class Base(SQLModel, table=False):
         return cls.query().create_many(data_list)
 
     @classmethod
-    def update(cls: Type[T], id: int, data: dict):
+    def update(cls: Type[T], id: int, data: SQLModel | dict):
         return cls.query().where(cls.id == id).update(data)
 
     @classmethod
     def update_many(cls: Type[T], filters: list, data: dict):
         return cls.query().where(*filters).update_many(data)
+
+    @classmethod
+    def delete_soft(cls: Type[T], id):
+        return cls.query().where(cls.id == id).update({"deleted_at": datetime.now(UTC)})
+    
+    @classmethod
+    def delete_hard(cls: Type[T], id):
+        return cls.query().where(cls.id == id).delete()
 
 
 class QueryBuilder(Generic[T]):
@@ -93,12 +101,13 @@ class QueryBuilder(Generic[T]):
             self.session.refresh(inst)
         return instances
 
-    def update(self, data: dict) -> Optional[T]:
+    def update(self, data: SQLModel | dict ) -> Optional[T]:
+        payload = data.model_dump() if isinstance(data, SQLModel) else data
         stmt = select(self.model).where(*self._filters)
         obj = self.session.exec(stmt).first()
         if not obj:
             return None
-        for key, value in data.items():
+        for key, value in payload.items():
             if hasattr(obj, key):
                 setattr(obj, key, value)
         obj.updated_at = datetime.now(UTC)
@@ -116,7 +125,20 @@ class QueryBuilder(Generic[T]):
             obj.updated_at = datetime.now(UTC)
         self.session.commit()
         return len(results)
+    
+    def delete(self) -> Optional[T]:
+        obj = self.session.exec(select(self.model).where(*self._filters)).first()
+        if not obj:
+            return None
+        self.session.delete(obj)
+        self.session.commit()
+        return obj
 
+    def delete_many(self) -> int:
+        stmt = delete(self.model).where(*self._filters)
+        result = self.session.exec(stmt)
+        self.session.commit()
+        return result.rowcount or 0
     # ---- Query ----
 
     # all()

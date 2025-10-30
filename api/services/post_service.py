@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod
 
 
-class UserService(ABC):
+class PostService(ABC):
     
     @classmethod
     @abstractmethod
-    def get_all_users(cls):
+    def get_all_posts(cls):
         pass
     
     @classmethod
     @abstractmethod
-    def get_user_by_id(cls):
+    def get_post_by_id(cls):
         pass
