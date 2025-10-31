@@ -17,9 +17,9 @@ class ProductServiceImpl(ProductService):
         return Product.find_by_id(id)
     
 
-    # @classmethod
-    # def create_product(cls, payload: ProductCreate | dict) -> Product:
-    #     return Product.create(payload)
+    @classmethod
+    def create_product(cls, payload: ProductCreate | dict) -> Product:
+        return Product.create(payload)
     
 
     # @classmethod

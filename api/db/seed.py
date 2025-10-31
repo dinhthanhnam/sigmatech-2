@@ -15,6 +15,7 @@ def seed():
                     Attribute(name="model"),
                     Attribute(name="lap_size"),
                     Attribute(name="mon_size"),
+                    Attribute(name="type")
                 ], 
                 session
             )
@@ -26,6 +27,10 @@ def seed():
             )
             Product.create(
                 LaptopCreate(name="Laptop 1", lap_size="14inch", model="ASUS01", mon_size="14inch")
+                ,session
+            )
+            Product.create(
+                MonitorCreate(name="Monitor 1", model="ASUS01", mon_size="14inch")
                 ,session
             )
             session.commit()

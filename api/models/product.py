@@ -2,7 +2,8 @@ from sqlmodel import SQLModel, Field, Relationship, Index, Session
 from typing import Optional, List, Type
 from .base import Base
 from .base import T
-from fastapi import HTTPException
+from exceptions.models.attribute_exception import AttributeNotFoundError
+
 
 class Product(Base, table=True):
     __tablename__ = "products" # type: ignore
@@ -51,9 +52,9 @@ class Product(Base, table=True):
             attribute = a.query(sess).where(a.name == key).first()
             # Không tồn tại thì dừng
             if not attribute:
-                return
+                raise AttributeNotFoundError(key)
+            
             attribute_id = attribute.id
-
             attrs_payload.append({
                 "product_id": product.id,
                 "attribute_id": attribute_id,
