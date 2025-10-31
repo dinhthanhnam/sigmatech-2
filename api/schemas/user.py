@@ -4,8 +4,8 @@ from .base import BaseSchema
 
 class UserCreate(BaseSchema):
     username: str
-    email: Optional[str] = None
-    password: str
+    email: str
+    hashed_password: str
 
 
 class UserRead(BaseSchema):

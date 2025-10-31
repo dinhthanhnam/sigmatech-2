@@ -21,41 +21,48 @@ class Base(SQLModel, table=False):
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None
 
+    @classmethod
+    def __get_query(cls: Type[T], sess: Session | None = None):
+        """Always return a QueryBuilder with a valid session."""
+        if sess is not None:
+            return QueryBuilder(cls, sess)
+        # create a temporary session (caller doesn’t pass one)
+        return QueryBuilder(cls, Session(engine))
+
     # Main query builder helper
     @classmethod
     def query(cls: Type[T], sess: Session | None = None):
-        sess = sess or Session(engine)
-        return QueryBuilder(cls, sess)
+        return cls.__get_query(sess).where(cls.deleted_at == None)
 
     # Helper for service layer
     @classmethod
-    def find_by_id(cls: Type[T], id: int):
-        return cls.query().where(cls.id == id).first()
+    def find_by_id(cls: Type[T], id: int, sess: Session | None = None) -> Optional[T]:
+        return cls.query(sess).where(cls.id == id).first()
     
     # CRUD shortcut dùng QueryBuilder
     @classmethod
-    def create(cls: Type[T], data: SQLModel | dict):
-        return cls.query().create(data)
+    def create(cls: Type[T], data: SQLModel | dict, sess: Session | None = None) -> T:
+        return cls.query(sess).create(data)
 
     @classmethod
-    def create_many(cls: Type[T], data_list: list[dict]):
-        return cls.query().create_many(data_list)
+    def create_many(cls: Type[T], data_list: list[SQLModel] | list[dict], sess: Session | None = None):
+        return cls.query(sess).create_many(data_list)
 
     @classmethod
-    def update(cls: Type[T], id: int, data: SQLModel | dict):
-        return cls.query().where(cls.id == id).update(data)
+    def update(cls: Type[T], id: int, data: SQLModel | dict, sess: Session | None = None):
+        return cls.query(sess).where(cls.id == id).update(data)
 
     @classmethod
-    def update_many(cls: Type[T], filters: list, data: dict):
-        return cls.query().where(*filters).update_many(data)
+    def update_many(cls: Type[T], filters: list, data: dict, sess: Session | None = None):
+        return cls.query(sess).where(*filters).update_many(data)
 
     @classmethod
-    def delete_soft(cls: Type[T], id):
-        return cls.query().where(cls.id == id).update({"deleted_at": datetime.now(UTC)})
+    def delete_soft(cls: Type[T], id, sess: Session | None = None):
+        return cls.query(sess).where(cls.id == id).update({"deleted_at": datetime.now(UTC)})
     
     @classmethod
-    def delete_hard(cls: Type[T], id):
-        return cls.query().where(cls.id == id).delete()
+    def delete_hard(cls: Type[T], id, sess: Session | None = None):
+        return cls.query(sess).where(cls.id == id).delete()
 
 
 class QueryBuilder(Generic[T]):
@@ -93,8 +100,13 @@ class QueryBuilder(Generic[T]):
         self.session.refresh(instance)
         return instance
 
-    def create_many(self, data_list: list[dict]) -> list[T]:
-        instances = [self.model(**data) for data in data_list]
+    def create_many(self, data_list: list[SQLModel] | list[dict]) -> list[T]:
+        if not data_list:
+            return []
+        instances: list[T] = []
+        for item in data_list:
+            instance = self.model(**(item.model_dump() if isinstance(item, SQLModel) else item))
+            instances.append(instance)
         self.session.add_all(instances)
         self.session.commit()
         for inst in instances:
