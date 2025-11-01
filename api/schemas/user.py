@@ -1,14 +1,15 @@
 from typing import Optional
-from .base import BaseSchema
-
+from .base import BaseSchema, BaseReadSchema, BaseUpdateSchema
+from pydantic import Field
+from utils.constants import Description, Example
 
 class UserCreate(BaseSchema):
-    username: str
-    email: str
-    hashed_password: str
+    username: str = Field(..., description=Description.User.username, examples=Example.User.username, ge=8, le=20)
+    email: str = Field(..., description=Description.User.email, examples=Example.User.email)
+    password: str = Field(..., description=Description.User.password, examples=Example.User.password, ge=8, le=20)
 
 
-class UserRead(BaseSchema):
+class UserRead(BaseReadSchema):
     id: int
     username: str
     email: str
@@ -16,7 +17,7 @@ class UserRead(BaseSchema):
     is_superuser: bool
 
 
-class UserUpdate(BaseSchema):
+class UserUpdate(BaseUpdateSchema):
     username: Optional[str] = None
     email: Optional[str] = None
     is_active: Optional[bool] = None

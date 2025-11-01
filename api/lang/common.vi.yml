@@ -1,2 +1,4 @@
 vi:
-  hello: "abc test Viet Nam"
+  hello: "Xin chào thế giới!"
+  product:
+    not_found: "Không tìm thấy sản phẩm!"

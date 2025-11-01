@@ -15,12 +15,12 @@ class UserServiceImpl(UserService):
     @classmethod
     def get_user_by_id(cls, id: int) -> Optional[User]:
         return User.find_by_id(id)
-    
+
 
     @classmethod
     def create_user(cls, payload: UserCreate | dict) -> User:
         return User.create(payload)
-    
+
 
     @classmethod
     def update_user(cls, id, payload: UserUpdate | dict) -> User | None:

@@ -1,7 +1,7 @@
 from services.product_service import ProductService
 from services import Product
 from typing import Sequence, Optional
-from schemas.product import ProductCreate
+from schemas.product import ProductCreate, ProductRead
 
 
 class ProductServiceImpl(ProductService):
@@ -20,15 +20,15 @@ class ProductServiceImpl(ProductService):
     @classmethod
     def create_product(cls, payload: ProductCreate | dict) -> Product:
         return Product.create(payload)
-    
 
-    # @classmethod
-    # def update_Product(cls, id, payload: ProductUpdate | dict) -> Product | None:
-    #     return Product.update(id, payload)
-    
 
     @classmethod
-    def delete_Product(cls, id) -> Product | None:
+    def update_product(cls, id, payload: dict) -> Product | None:
+        return Product.update(id, payload)
+
+
+    @classmethod
+    def delete_product(cls, id) -> Product | None:
         return Product.delete_soft(id)
 
 product_service = ProductServiceImpl()

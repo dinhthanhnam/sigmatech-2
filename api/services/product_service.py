@@ -12,3 +12,18 @@ class ProductService(ABC):
     @abstractmethod
     def get_product_by_id(cls):
         pass
+
+    @classmethod
+    @abstractmethod
+    def create_product(cls, payload):
+        pass
+    
+    @classmethod
+    @abstractmethod
+    def update_product(cls, id, payload):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def delete_product(cls, id):
+        pass
