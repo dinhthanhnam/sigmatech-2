@@ -1,6 +1,7 @@
 from sqlmodel import Field, Relationship
-from typing import Optional, List
-from .base import Base
+from typing import Optional, List, Type
+from .base import Base, T, SQLModel, Session
+from utils.crypto import hash_password
 
 
 class User(Base, table=True):
@@ -13,3 +14,21 @@ class User(Base, table=True):
     is_superuser: bool = False
 
     posts: List["Post"] = Relationship(back_populates="author") # type: ignore
+
+    # override
+    @classmethod
+    def create(cls: Type[T], data: SQLModel | dict, sess: Session | None = None) -> T:
+        payload = data.model_dump() if isinstance(data, SQLModel) else data
+        payload["hashed_password"] = hash_password(payload.pop("password"))
+        return super().create(payload, sess)
+
+
+    @classmethod
+    def create_many(cls: Type[T], data_list: list[SQLModel] | list[dict], sess: Session | None = None):
+        payload = []
+        for data in data_list:
+            item = data.model_dump() if isinstance(data, SQLModel) else dict(data)
+            item["hashed_password"] = hash_password(item.pop("password"))
+            payload.append(item)
+
+        return super().create_many(payload, sess)

@@ -20,8 +20,8 @@ def seed():
                 session
             )
             User.create_many([
-                    UserCreate(username="admin", email="admin@example.com", hashed_password="12345678"),
-                    UserCreate(username="user1", email="user1@example.com", hashed_password="12345678"),
+                    UserCreate(username="admin123", email="admin@example.com", password="12345678"),
+                    UserCreate(username="user1234", email="user1@example.com", password="12345678"),
                 ],
                 session
             )

@@ -4,9 +4,9 @@ from pydantic import Field
 from utils.constants import Description, Example
 
 class UserCreate(BaseSchema):
-    username: str = Field(..., description=Description.User.username, examples=Example.User.username, ge=8, le=20)
+    username: str = Field(..., description=Description.User.username, examples=Example.User.username, min_length=8, max_length=20)
     email: str = Field(..., description=Description.User.email, examples=Example.User.email)
-    password: str = Field(..., description=Description.User.password, examples=Example.User.password, ge=8, le=20)
+    password: str = Field(..., description=Description.User.password, examples=Example.User.password, min_length=8, max_length=20)
 
 
 class UserRead(BaseReadSchema):

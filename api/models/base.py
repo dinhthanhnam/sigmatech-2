@@ -45,7 +45,7 @@ class Base(SQLModel, table=False):
         return cls.query(sess).create(data)
 
     @classmethod
-    def create_many(cls: Type[T], data_list: list[SQLModel] | list[dict], sess: Session | None = None):
+    def create_many(cls: Type[T], data_list: list[SQLModel] | list[dict], sess: Session | None = None) -> list[T]:
         return cls.query(sess).create_many(data_list)
 
     @classmethod
