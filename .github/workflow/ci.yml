@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run commands
+        run: |
+          docker compose build
+          docker compose run --rm api poetry sync
+          docker compose run --rm web npm ci
+          docker compose run --rm api poetry run alembic upgrade head
+          docker compose run --rm api poetry run python -m db.seed
