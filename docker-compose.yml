@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: docker/api/Dockerfile
-    container_name: sigmatech-api
+    container_name: sigmatech2-api
     ports:
       - "8000:8000"
     depends_on:
@@ -16,24 +16,21 @@ services:
     build:
       context: .
       dockerfile: docker/web/Dockerfile
-    container_name: sigmatech-web
+    container_name: sigmatech2-web
     ports:
       - "3000:3000"
-    depends_on:
-      - api
     volumes:
       - ./web:/var/app
     working_dir: /var/app
 
   db:
     image: mysql:8.4
-    container_name: sigmatech-db
+    container_name: sigmatech2-db
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: sigmatech2
       MYSQL_USER: sigmatech2
       MYSQL_PASSWORD: sigmatech2
-    command: --default-authentication-plugin=mysql_native_password
     volumes:
       - mysql_data:/var/lib/mysql
     ports:

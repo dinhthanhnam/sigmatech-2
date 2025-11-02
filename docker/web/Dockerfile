@@ -1,3 +1,3 @@
 FROM node:22
 
-CMD ["npm", "dev"]
+CMD ["npm", "run", "dev"]
