@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from schemas.product import ProductRead, ProductCreate
 from services.impl.product_service_impl import product_service
 from typing import List, Union, Optional
@@ -20,8 +20,8 @@ def flatten(product: Product):
 
 
 @router.get(path="",response_model=List[ProductRead])
-def index():
-    products = product_service.get_all_products()
+def index(page=Query()):
+    products = product_service.get_paginated_products(page=page, take=8)
     if not products:
         raise HTTPException(status_code=404, detail=t('common.product.not_found'))
     return [flatten(p) for p in products]

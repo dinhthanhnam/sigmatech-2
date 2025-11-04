@@ -7,7 +7,12 @@ class UserService(ABC):
     @abstractmethod
     def get_all_users(cls):
         pass
-    
+
+    @classmethod
+    @abstractmethod
+    def get_paginated_users(cls, page: int, take: int):
+        pass
+
     @classmethod
     @abstractmethod
     def get_user_by_id(cls):

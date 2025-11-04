@@ -6,10 +6,16 @@ from schemas.user import UserCreate, UserUpdate
 
 class UserServiceImpl(UserService):
 
-    
+
     @classmethod
     def get_all_users(cls) -> Sequence[User]:
         return User.query().all()
+
+
+    @classmethod
+    def get_paginated_users(cls, page: int, take: int) -> Sequence[User]:
+        offset = (page - 1) * take
+        return User.query().offset(offset).limit(take).all()
 
 
     @classmethod
@@ -25,7 +31,7 @@ class UserServiceImpl(UserService):
     @classmethod
     def update_user(cls, id, payload: UserUpdate | dict) -> User | None:
         return User.update(id, payload)
-    
+
 
     @classmethod
     def delete_user(cls, id) -> User | None:

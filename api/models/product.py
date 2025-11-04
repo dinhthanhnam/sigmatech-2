@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field, Relationship, Index, Session
-from typing import Optional, List, Type
+from typing import Optional, List, Type, Union, Any
 from .base import Base
 from .base import T
 from exceptions.models.attribute_exception import AttributeNotFoundError
@@ -23,14 +23,12 @@ class Product(Base, table=True):
         query = query.with_("product_attribute")
         return query
 
+
     #override
     @classmethod
     def find_by_id(cls: type[T], id: int, sess: Session | None = None)-> Optional[T]:
         return cls.query(sess).where(cls.id == id).first()
 
-    # @classmethod
-    # def get_attr(cls):
-    #     return
 
     #override
     @classmethod
@@ -67,3 +65,10 @@ class Product(Base, table=True):
         return product
 
 
+    # Shortcut
+    def attr(self, attr_name: str) -> Optional[Any]:
+        """Lấy giá trị của một attribute cụ thể."""
+        for pa in self.product_attribute:
+            if pa.attribute and pa.attribute.name == attr_name:
+                return pa.value
+        return None

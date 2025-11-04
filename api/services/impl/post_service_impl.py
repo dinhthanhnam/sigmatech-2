@@ -17,7 +17,7 @@ class PostServiceImpl(PostService):
     
 
     @classmethod
-    def create_user(cls, payload: PostCreate | dict) -> Post:
+    def create_post(cls, payload: PostCreate | dict) -> Post:
         return Post.create(payload)
     
 

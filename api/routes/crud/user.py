@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from schemas.user import UserRead
 from services.impl.user_service_impl import user_service
 from typing import List
@@ -9,8 +9,8 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @router.get(path='/',response_model=List[UserRead])
-def index():
-    return user_service.get_all_users()
+def index(page: int = Query(1, ge=1)):
+    return user_service.get_paginated_users(page=page, take=8)
 
 
 @router.get(path='/{user_id}',response_model=UserRead)

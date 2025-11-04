@@ -10,6 +10,11 @@ class ProductService(ABC):
     
     @classmethod
     @abstractmethod
+    def get_paginated_products(cls):
+        pass
+
+    @classmethod
+    @abstractmethod
     def get_product_by_id(cls):
         pass
 

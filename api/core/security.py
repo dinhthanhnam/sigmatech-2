@@ -3,6 +3,3 @@ class MySecurity:
         pass
 
 
-
-class JwtAuth:
-    

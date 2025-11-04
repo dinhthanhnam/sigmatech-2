@@ -1,7 +1,7 @@
 from sqlmodel import Field, Relationship
 from typing import Optional, List, Type
 from .base import Base, T, SQLModel, Session
-from utils.crypto import hash_password
+from utils.crypto import hash
 
 
 class User(Base, table=True):
@@ -19,7 +19,7 @@ class User(Base, table=True):
     @classmethod
     def create(cls: Type[T], data: SQLModel | dict, sess: Session | None = None) -> T:
         payload = data.model_dump() if isinstance(data, SQLModel) else data
-        payload["hashed_password"] = hash_password(payload.pop("password"))
+        payload["hashed_password"] = hash(payload.pop("password"))
         return super().create(payload, sess)
 
 
@@ -28,7 +28,7 @@ class User(Base, table=True):
         payload = []
         for data in data_list:
             item = data.model_dump() if isinstance(data, SQLModel) else dict(data)
-            item["hashed_password"] = hash_password(item.pop("password"))
+            item["hashed_password"] = hash(item.pop("password"))
             payload.append(item)
 
         return super().create_many(payload, sess)

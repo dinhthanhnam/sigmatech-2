@@ -16,9 +16,11 @@ class UserRead(BaseReadSchema):
     is_active: bool
     is_superuser: bool
 
-
-class UserUpdate(BaseUpdateSchema):
+class PartialUser(BaseSchema):
     username: Optional[str] = None
     email: Optional[str] = None
     is_active: Optional[bool] = None
     is_superuser: Optional[bool] = None
+
+class UserUpdate(BaseUpdateSchema, PartialUser):
+    pass

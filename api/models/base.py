@@ -1,5 +1,7 @@
 from sqlmodel import SQLModel, Field, select, Session, delete
-from typing import Optional, Type, TypeVar, Sequence, Generic
+from sqlalchemy.orm import load_only
+from pydantic import create_model, BaseModel
+from typing import Optional, Type, TypeVar, Sequence, Generic, Literal, Union
 from sqlalchemy.orm import selectinload
 from contextlib import contextmanager
 from db import engine
@@ -68,9 +70,14 @@ class Base(SQLModel, table=False):
 class QueryBuilder(Generic[T]):
     def __init__(self, model: Type[T], session: Session, auto_commit: bool = False):
         self.model = model
-        self.session = session
+        self._columns: tuple[str, ...] | None = None
         self._filters = []
         self._options = []
+        self._offset = None
+        self._limit = None
+        self._order_by = []
+        self._group_by = []
+        self.session = session
         self.auto_commit = auto_commit
 
 
@@ -88,9 +95,25 @@ class QueryBuilder(Generic[T]):
                 self.session.refresh(obj)
 
 
+    def only(self, *fields):
+        self._options.append(load_only(*fields))
+        return self
+
+
     # where()
     def where(self, *conditions):
         self._filters.extend(conditions)
+        return self
+    
+
+    # offset -> lấy bắt đầu từ bản ghi số bao nhiêu
+    def offset(self, value: int):
+        self._offset = value
+        return self
+
+    # take -> lấy bao nhiêu 1 lần
+    def limit(self, value: int):  # tương đương limit
+        self._limit = value
         return self
 
     # with_() → eager load quan hệ
@@ -105,7 +128,17 @@ class QueryBuilder(Generic[T]):
         subquery = condition_func(rel_model)
         self._filters.append(getattr(self.model, relation).any(subquery))
         return self
-    
+
+    # order_by -> sắp xếp theo một hoặc nhiều cột
+    def order_by(self, *columns):
+        self._order_by = columns
+        return self
+
+    # group_by -> gom nhóm theo một hoặc nhiều cột
+    def group_by(self, *columns):
+        self._group_by = columns
+        return self
+
     # ---- CRUD ----
 
     def create(self, data: SQLModel | dict) -> T:
@@ -171,17 +204,31 @@ class QueryBuilder(Generic[T]):
     # all()
     def all(self) -> Sequence[T]:
         stmt = select(self.model)
+
         if self._filters:
             stmt = stmt.where(*self._filters)
         if self._options:
             stmt = stmt.options(*self._options)
+        if self._offset:
+            stmt = stmt.offset(self._offset)
+        if self.limit:
+            stmt = stmt.limit(self._limit)
+        if self._group_by:
+            stmt = stmt.group_by(*self._group_by)
+        if self._order_by:
+            stmt = stmt.order_by(*self._order_by)
         return self.session.exec(stmt).all()
 
     # first()
     def first(self) -> Optional[T]:
         stmt = select(self.model)
+
         if self._filters:
             stmt = stmt.where(*self._filters)
         if self._options:
             stmt = stmt.options(*self._options)
+        if self._group_by:
+            stmt = stmt.group_by(*self._group_by)
+        if self._order_by:
+            stmt = stmt.order_by(*self._order_by)
         return self.session.exec(stmt).first()

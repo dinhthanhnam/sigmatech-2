@@ -3,7 +3,6 @@ from sqlmodel import Session, select
 from models.user import User
 from models.product import Product
 from models.attribute import Attribute
-from models.base import get_session
 from schemas.user import UserCreate
 from schemas.product import ProductCreate, LaptopCreate, MonitorCreate
 

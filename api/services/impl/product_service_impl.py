@@ -13,6 +13,12 @@ class ProductServiceImpl(ProductService):
 
 
     @classmethod
+    def get_paginated_products(cls, page, take) -> Sequence[Product]:
+        offset = (page - 1) * take
+        return Product.query().offset(offset).limit(take).all()
+
+
+    @classmethod
     def get_product_by_id(cls, id: int) -> Optional[Product]:
         return Product.find_by_id(id)
     
