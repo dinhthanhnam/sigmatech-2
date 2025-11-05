@@ -1,30 +1,46 @@
 from sqlmodel import Field, Relationship
-from typing import Optional, List, Type
-from .base import Base, T, SQLModel, Session
+from typing import Optional, List, Type, Self, Sequence, TypeVar
+from .base import Base, SQLModel, Session
 from utils.crypto import hash
+from sqlalchemy.exc import IntegrityError
+from exceptions.models.unique_constraint import UniqueConstraintError
+
+
+T = TypeVar("T", bound="User")
 
 
 class User(Base, table=True):
     __tablename__ = "users" # type: ignore
     
     username: str = Field(index=True, unique=True)
-    email: str = Field(unique=True)
+    email: str = Field(index=True, unique=True)
     hashed_password: str
     is_active: bool = True
     is_superuser: bool = False
 
     posts: List["Post"] = Relationship(back_populates="author") # type: ignore
 
+
+    @classmethod
+    def find_by_email(cls: Type[T], email: str, sess: Session | None = None) -> Optional[T]:
+        return cls.query(sess).where(cls.email == email).first()
+
+
     # override
     @classmethod
-    def create(cls: Type[T], data: SQLModel | dict, sess: Session | None = None) -> T:
+    def create(cls: Type[T], data: SQLModel | dict, sess: Session | None = None) -> Optional[T]:
         payload = data.model_dump() if isinstance(data, SQLModel) else data
         payload["hashed_password"] = hash(payload.pop("password"))
-        return super().create(payload, sess)
+        try:
+            return super().create(payload, sess)
+        except IntegrityError as e:
+            msg = str(e.orig)
+            if "Duplicate entry" in msg:
+                raise UniqueConstraintError(msg)
 
-
+    # override
     @classmethod
-    def create_many(cls: Type[T], data_list: list[SQLModel] | list[dict], sess: Session | None = None):
+    def create_many(cls: Type[T], data_list: list[SQLModel] | list[dict], sess: Session | None = None) -> Sequence[T]:
         payload = []
         for data in data_list:
             item = data.model_dump() if isinstance(data, SQLModel) else dict(data)

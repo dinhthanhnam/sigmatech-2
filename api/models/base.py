@@ -18,7 +18,7 @@ def get_session():
 
 
 class Base(SQLModel, table=False):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int = Field(..., primary_key=True)
     created_at: datetime = Field(default=datetime.now(UTC))
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None

@@ -1,11 +1,11 @@
 from typing import Optional
 from .base import BaseSchema, BaseReadSchema, BaseUpdateSchema
-from pydantic import Field
+from pydantic import Field, EmailStr
 from utils.constants import Description, Example
 
 class UserCreate(BaseSchema):
     username: str = Field(..., description=Description.User.username, examples=Example.User.username, min_length=8, max_length=20)
-    email: str = Field(..., description=Description.User.email, examples=Example.User.email)
+    email: EmailStr = Field(..., description=Description.User.email, examples=Example.User.email)
     password: str = Field(..., description=Description.User.password, examples=Example.User.password, min_length=8, max_length=20)
 
 
@@ -24,3 +24,7 @@ class PartialUser(BaseSchema):
 
 class UserUpdate(BaseUpdateSchema, PartialUser):
     pass
+
+class UserAuth(BaseSchema):
+    email: EmailStr = Field(..., description=Description.User.email, examples=Example.User.email)
+    password: str = Field(..., description=Description.User.password, examples=Example.User.password, min_length=8, max_length=20)

@@ -2,3 +2,14 @@ vi:
   hello: "Xin chào thế giới!"
   product:
     not_found: "Không tìm thấy sản phẩm!"
+
+  user:
+    not_found: "Không tìm thấy người dùng!"
+    email_existed: "Email này đã tồn tại!"
+    username_existed: "Tên người dùng đã tồn tại!"
+  token:
+    invalid: "Token không hợp lệ!"
+
+
+  bad_request: "Request không hợp lệ!"
+  internal_server_error: "Lỗi hệ thống!"

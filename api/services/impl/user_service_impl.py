@@ -1,8 +1,8 @@
 from services.user_service import UserService
 from services import User
 from typing import Sequence, Optional
-from schemas.user import UserCreate, UserUpdate
-
+from schemas.user import UserCreate, UserUpdate, UserAuth
+from utils.crypto import verify_password
 
 class UserServiceImpl(UserService):
 
@@ -24,7 +24,7 @@ class UserServiceImpl(UserService):
 
 
     @classmethod
-    def create_user(cls, payload: UserCreate | dict) -> User:
+    def create_user(cls, payload: UserCreate | dict) -> User | None:
         return User.create(payload)
 
 
@@ -36,5 +36,16 @@ class UserServiceImpl(UserService):
     @classmethod
     def delete_user(cls, id) -> User | None:
         return User.delete_soft(id)
+
+    #------------Bussiness--------------
+    #------------Auth-------------------
+    @classmethod
+    def authenticate_user(cls, payload: UserAuth) -> User | None:
+        user = User.find_by_email(payload.email)
+        if not user:
+            return None
+        auth_user = user if verify_password(payload.password, user.hashed_password) else None
+        return auth_user
+
 
 user_service = UserServiceImpl()

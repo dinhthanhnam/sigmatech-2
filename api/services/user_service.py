@@ -32,3 +32,8 @@ class UserService(ABC):
     @abstractmethod
     def delete_user(cls, id):
         pass
+
+    @classmethod
+    @abstractmethod
+    def authenticate_user(cls, payload):
+        pass
