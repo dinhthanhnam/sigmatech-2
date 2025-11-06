@@ -43,7 +43,7 @@ class Base(SQLModel, table=False):
         return cls.query().create(data)
 
     @classmethod
-    def create_many(cls: Type[T], data_list: list[SQLModel] | list[dict]) -> list[T]:
+    def create_many(cls: Type[T], data_list: list[SQLModel] | list[dict]) -> Sequence[T]:
         return cls.query().create_many(data_list)
 
     # def update(self: T, data: SQLModel | dict, sess: Session | None = None) -> Optional[T]:
@@ -60,7 +60,7 @@ class Base(SQLModel, table=False):
     #     return self
 
     @classmethod
-    def update_one(cls: Type[T], id: int, data: SQLModel | dict) -> Union[T, None]:
+    def update_one(cls: Type[T], id: int, data: SQLModel | dict) -> Optional[T]:
         updated = cls.query().where(cls.id == id).update(data)
         if updated:
             return cast(T, updated[0])
@@ -68,7 +68,7 @@ class Base(SQLModel, table=False):
             return None
 
     @classmethod
-    def update_many(cls: Type[T], filters: list, data: dict) -> Union[Sequence[T], T, None]:
+    def update_many(cls: Type[T], filters: list, data: dict) -> Optional[Sequence[T]]:
         return cls.query().where(*filters).update(data)
 
     # @classmethod
@@ -103,13 +103,15 @@ class QueryBuilder(Generic[T]):
             self.session.commit()
 
 
-    def _refresh(self, obj: T | list[T]):
-        if self.auto_commit:
-            if isinstance(obj, list):
-                for o in obj:
-                    self.session.refresh(o)
-            else:
-                self.session.refresh(obj)
+    # def _refresh(self, obj: T | list[T]):
+    #     if self.auto_commit and not self.session.in_transaction():
+    #         if isinstance(obj, list):
+    #             for o in obj:
+    #                 if o in self.session:
+    #                     self.session.refresh(o)
+    #         else:
+    #             if obj in self.session:
+    #                 self.session.refresh(obj)
 
 
     def only(self, *fields):
@@ -163,10 +165,10 @@ class QueryBuilder(Generic[T]):
         instance = self.model(**payload)
         self.session.add(instance)
         self._commit()
-        self._refresh(instance)
+        self.session.flush()
         return instance
 
-    def create_many(self, data_list: list[SQLModel] | list[dict]) -> list[T]:
+    def create_many(self, data_list: list[SQLModel] | list[dict]) -> Sequence[T]:
         if not data_list:
             return []
         instances: list[T] = []
@@ -175,7 +177,7 @@ class QueryBuilder(Generic[T]):
             instances.append(instance)
         self.session.add_all(instances)
         self._commit()
-        self._refresh(instance)
+        self.session.flush()
         return instances
 
     # def update(self, data: SQLModel | dict ) -> Optional[T]:

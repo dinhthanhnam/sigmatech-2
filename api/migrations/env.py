@@ -5,6 +5,8 @@ from alembic import context
 from db import engine
 from sqlmodel import SQLModel
 from models import *
+from core.config import settings
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -15,6 +17,9 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+section = config.config_ini_section
+config.set_section_option(section, "DB", settings.database_url) # type: ignore
+config.set_section_option(section, "DB_TEST", settings.test_database_url) # type: ignore
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
