@@ -10,6 +10,7 @@ vi:
 
   auth:
     password_mismatched: "Mật khẩu không khớp!"
+    user_not_found: "Thông tin đăng nhập không khớp!"
   token:
     invalid: "Token không hợp lệ!"
 

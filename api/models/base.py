@@ -46,19 +46,6 @@ class Base(SQLModel, table=False):
     def create_many(cls: Type[T], data_list: list[SQLModel] | list[dict]) -> Sequence[T]:
         return cls.query().create_many(data_list)
 
-    # def update(self: T, data: SQLModel | dict, sess: Session | None = None) -> Optional[T]:
-    #     if not self.id:
-    #         raise ValueError("Cannot update unsaved instance (no id)")
-    #     model_cls = type(self)
-    #     payload = data.model_dump() if isinstance(data, SQLModel) else data
-    #     result = model_cls.query(sess).where(model_cls.id == self.id).update(payload)
-    #     if result:
-    #         for k, v in payload.items():
-    #             if hasattr(self, k):
-    #                 setattr(self, k, v)
-    #         self.updated_at = datetime.now(UTC)
-    #     return self
-
     @classmethod
     def update_one(cls: Type[T], id: int, data: SQLModel | dict) -> Optional[T]:
         updated = cls.query().where(cls.id == id).update(data)
@@ -76,8 +63,13 @@ class Base(SQLModel, table=False):
     #     return cls.query(sess).
 
     @classmethod
-    def delete_soft(cls: Type[T], id):
-        return cls.query().where(cls.id == id).update({"deleted_at": datetime.now(UTC)})
+    def delete_soft(cls: Type[T], id) -> Optional[T]:
+        deleted = cls.query().where(cls.id == id).update({"deleted_at": datetime.now(UTC)})
+        if deleted:
+            return cast(T, deleted[0])
+        else:
+            return None
+
     
     @classmethod
     def delete_hard(cls: Type[T], id):

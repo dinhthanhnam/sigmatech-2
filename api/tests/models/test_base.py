@@ -4,21 +4,25 @@ import pytest
 from typing import Optional, cast
 from db import clear_session, test_engine, set_test_engine, get_session
 
-metadata = SQLModel.metadata
 
-class Model(Base, table=True, metadata=metadata):
+class Model(Base, table=True):
     __tablename__ = "models" # type: ignore
 
     name: str
     brand: Optional[str] = None
+    password: Optional[str] = None
 
 @pytest.fixture(autouse=True)
 def setup_db():
     set_test_engine()
+    Base.metadata.drop_all(test_engine) 
     Base.metadata.create_all(test_engine)
-    yield
+    with Session(test_engine) as session:
+        yield session
+        session.rollback()
+        session.close()
+
     clear_session()
-    Base.metadata.drop_all(test_engine)
 
 
 def test_create():

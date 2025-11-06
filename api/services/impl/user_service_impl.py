@@ -3,7 +3,7 @@ from models import User
 from typing import Sequence, Optional
 from schemas import UserCreate, UserUpdate, UserAuthRequest
 from utils.crypto import verify_password
-from exceptions import PasswordMismatchedError
+from exceptions import PasswordMismatchedError, UserNotFoundError
 
 class UserServiceImpl(UserService):
 
@@ -31,7 +31,7 @@ class UserServiceImpl(UserService):
 
     @classmethod
     def update_user(cls, id, payload: UserUpdate | dict) -> User | None:
-        return User.update(id, payload)
+        return User.update_one(id, payload)
 
 
     @classmethod
@@ -45,6 +45,7 @@ class UserServiceImpl(UserService):
         user = User.find_by_email(payload.email)
         if not user:
             raise UserNotFoundError()
+        print(payload.password)
         password_matched = verify_password(payload.password, user.hashed_password)
         if not password_matched:
             raise PasswordMismatchedError()

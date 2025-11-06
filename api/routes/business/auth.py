@@ -9,7 +9,7 @@ from i18n import t
 from exceptions import UniqueConstraintError
 from utils.jwt import create_access_token, create_refresh_token, decode_token
 from core.config import settings
-from exceptions import PasswordMismatchedError
+from exceptions import PasswordMismatchedError, UserNotFoundError
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -78,7 +78,12 @@ def authenticate_user(
     except PasswordMismatchedError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=e
+            detail=str(e)
+        )
+    except UserNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
         )
 
 
