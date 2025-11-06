@@ -2,9 +2,9 @@ from sqlmodel import create_engine
 from core.config import settings
 from contextvars import ContextVar
 
-engine = create_engine(settings.database_url, echo=True) #type: ignore
+engine = create_engine(settings.database_url, echo=False) #type: ignore
 
-test_engine = create_engine(settings.test_database_url, echo=True) #type: ignore
+test_engine = create_engine(settings.test_database_url, echo=False) #type: ignore
 
 _current_engine: ContextVar = ContextVar("_current_engine", default=engine)
 

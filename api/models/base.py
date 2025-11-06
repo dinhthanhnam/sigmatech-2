@@ -103,17 +103,6 @@ class QueryBuilder(Generic[T]):
             self.session.commit()
 
 
-    # def _refresh(self, obj: T | list[T]):
-    #     if self.auto_commit and not self.session.in_transaction():
-    #         if isinstance(obj, list):
-    #             for o in obj:
-    #                 if o in self.session:
-    #                     self.session.refresh(o)
-    #         else:
-    #             if obj in self.session:
-    #                 self.session.refresh(obj)
-
-
     def only(self, *fields):
         self._options.append(load_only(*fields))
         return self
