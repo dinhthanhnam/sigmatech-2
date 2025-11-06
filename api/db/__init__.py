@@ -1,14 +1,7 @@
 import pymysql
 pymysql.install_as_MySQLdb()
 
+from .session_context import clear_session, get_session, set_session
+from .transactional import transactional
+from .db_engine import engine
 
-from sqlmodel import create_engine, Session
-from core.config import settings
-
-
-engine = create_engine(settings.database_url, echo=True) #type: ignore
-
-
-def get_session():
-    with Session(engine) as session:
-        yield session

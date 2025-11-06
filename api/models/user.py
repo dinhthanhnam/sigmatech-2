@@ -22,17 +22,17 @@ class User(Base, table=True):
 
 
     @classmethod
-    def find_by_email(cls: Type[T], email: str, sess: Session | None = None) -> Optional[T]:
-        return cls.query(sess).where(cls.email == email).first()
+    def find_by_email(cls: Type[T], email: str) -> Optional[T]:
+        return cls.query().where(cls.email == email).first()
 
 
     # override
     @classmethod
-    def create(cls: Type[T], data: SQLModel | dict, sess: Session | None = None) -> Optional[T]:
+    def create(cls: Type[T], data: SQLModel | dict) -> Optional[T]:
         payload = data.model_dump() if isinstance(data, SQLModel) else data
         payload["hashed_password"] = hash(payload.pop("password"))
         try:
-            return super().create(payload, sess)
+            return super().create(payload)
         except IntegrityError as e:
             msg = str(e.orig)
             if "Duplicate entry" in msg:
@@ -40,11 +40,11 @@ class User(Base, table=True):
 
     # override
     @classmethod
-    def create_many(cls: Type[T], data_list: list[SQLModel] | list[dict], sess: Session | None = None) -> Sequence[T]:
+    def create_many(cls: Type[T], data_list: list[SQLModel] | list[dict]) -> Sequence[T]:
         payload = []
         for data in data_list:
             item = data.model_dump() if isinstance(data, SQLModel) else dict(data)
             item["hashed_password"] = hash(item.pop("password"))
             payload.append(item)
 
-        return super().create_many(payload, sess)
+        return super().create_many(payload)

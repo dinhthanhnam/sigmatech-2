@@ -3,11 +3,10 @@ from sqlalchemy.orm import load_only
 from pydantic import create_model, BaseModel
 from typing import Optional, Type, TypeVar, Sequence, Generic, Literal, Union, cast
 from sqlalchemy.orm import selectinload
-from contextlib import contextmanager
 from db import engine
 from datetime import datetime, UTC
 from sqlalchemy import ColumnElement
-
+from db import get_session
 
 T = TypeVar("T", bound="Base")
 
@@ -24,31 +23,28 @@ class Base(SQLModel, table=False):
     #     return getattr(cls.__table__.c, name) # type: ignore
 
     @classmethod
-    def __get_query(cls: Type[T], sess: Session | None = None):
+    def __get_query(cls: Type[T]):
         """Always return a QueryBuilder with a valid session."""
-        if sess is not None:
-            return QueryBuilder(cls, sess, auto_commit=False)
-        # create a temporary session (caller doesn’t pass one)
-        return QueryBuilder(cls, Session(engine), auto_commit=True)
+        return QueryBuilder(cls, get_session())
 
     # Main query builder helper
     @classmethod
-    def query(cls: Type[T], sess: Session | None = None):
-        return cls.__get_query(sess).where(cls.deleted_at == None)
+    def query(cls: Type[T]):
+        return cls.__get_query().where(cls.deleted_at == None)
 
     # Helper for service layer
     @classmethod
-    def find_by_id(cls: Type[T], id: int, sess: Session | None = None) -> Optional[T]:
-        return cls.query(sess).where(cls.id == id).first()
+    def find_by_id(cls: Type[T], id: int) -> Optional[T]:
+        return cls.query().where(cls.id == id).first()
     
     # CRUD shortcut dùng QueryBuilder
     @classmethod
-    def create(cls: Type[T], data: SQLModel | dict, sess: Session | None = None) -> T:
-        return cls.query(sess).create(data)
+    def create(cls: Type[T], data: SQLModel | dict) -> T:
+        return cls.query().create(data)
 
     @classmethod
-    def create_many(cls: Type[T], data_list: list[SQLModel] | list[dict], sess: Session | None = None) -> list[T]:
-        return cls.query(sess).create_many(data_list)
+    def create_many(cls: Type[T], data_list: list[SQLModel] | list[dict]) -> list[T]:
+        return cls.query().create_many(data_list)
 
     # def update(self: T, data: SQLModel | dict, sess: Session | None = None) -> Optional[T]:
     #     if not self.id:
@@ -64,35 +60,32 @@ class Base(SQLModel, table=False):
     #     return self
 
     @classmethod
-    def update_one(cls: Type[T], id: int, data: SQLModel | dict, sess: Session | None = None) -> Union[T, None]:
-        updated = cls.query(sess).where(cls.id == id).update(data)
+    def update_one(cls: Type[T], id: int, data: SQLModel | dict) -> Union[T, None]:
+        updated = cls.query().where(cls.id == id).update(data)
         if updated:
             return cast(T, updated[0])
         else:
             return None
 
-
     @classmethod
-    def update_many(cls: Type[T], filters: list, data: dict, sess: Session | None = None) -> Union[Sequence[T], T, None]:
-        return cls.query(sess).where(*filters).update(data)
-
+    def update_many(cls: Type[T], filters: list, data: dict) -> Union[Sequence[T], T, None]:
+        return cls.query().where(*filters).update(data)
 
     # @classmethod
     # def update_bulk(cls: Type[T], filters: list, data: dict, sess: Session | None = None) -> Union[Sequence[T], T, None]:
     #     return cls.query(sess).
 
-
     @classmethod
-    def delete_soft(cls: Type[T], id, sess: Session | None = None):
-        return cls.query(sess).where(cls.id == id).update({"deleted_at": datetime.now(UTC)})
+    def delete_soft(cls: Type[T], id):
+        return cls.query().where(cls.id == id).update({"deleted_at": datetime.now(UTC)})
     
     @classmethod
-    def delete_hard(cls: Type[T], id, sess: Session | None = None):
-        return cls.query(sess).where(cls.id == id).delete()
+    def delete_hard(cls: Type[T], id):
+        return cls.query().where(cls.id == id).delete()
 
 
 class QueryBuilder(Generic[T]):
-    def __init__(self, model: Type[T], session: Session, auto_commit: bool = False):
+    def __init__(self, model: Type[T], session: Session):
         self.model = model
         self._columns: tuple[str, ...] | None = None
         self._filters = []
@@ -102,11 +95,11 @@ class QueryBuilder(Generic[T]):
         self._order_by = []
         self._group_by = []
         self.session = session
-        self.auto_commit = auto_commit
+        self.auto_commit = True
 
 
     def _commit(self):
-        if self.auto_commit:
+        if self.auto_commit and not self.session.in_transaction():
             self.session.commit()
 
 

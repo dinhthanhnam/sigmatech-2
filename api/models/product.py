@@ -18,26 +18,26 @@ class Product(Base, table=True):
 
     #override
     @classmethod
-    def query(cls: type[T], sess: Session | None = None):
-        query = super().query(sess)
+    def query(cls: type[T]):
+        query = super().query()
         query = query.with_("product_attribute")
         return query
 
 
     #override
     @classmethod
-    def find_by_id(cls: type[T], id: int, sess: Session | None = None)-> Optional[T]:
-        return cls.query(sess).where(cls.id == id).first()
+    def find_by_id(cls: type[T], id: int)-> Optional[T]:
+        return cls.query().where(cls.id == id).first()
 
 
     #override
     @classmethod
-    def create(cls: type[T], data: SQLModel | dict, sess: Session | None = None) -> T:
+    def create(cls: type[T], data: SQLModel | dict) -> T:
         raw = data.model_dump() if isinstance(data, SQLModel) else dict(data)
 
 
         product_payload = {"name": raw.get("name")}
-        product = cls.query(sess).create(product_payload)
+        product = cls.query().create(product_payload)
 
         attrs_payload = []
         from .attribute import Attribute as a
@@ -47,7 +47,7 @@ class Product(Base, table=True):
             if key == "name":
                 continue
             # tìm attribute template (nếu đã tồn tại)
-            attribute = a.query(sess).where(a.name == key).first()
+            attribute = a.query().where(a.name == key).first()
             # Không tồn tại thì dừng
             if not attribute:
                 raise AttributeNotFoundError(key)
@@ -60,7 +60,7 @@ class Product(Base, table=True):
             })
 
         if attrs_payload:
-            pa.query(sess).create_many(attrs_payload)
+            pa.query().create_many(attrs_payload)
         
         return product
 
