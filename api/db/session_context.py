@@ -1,6 +1,7 @@
 from contextvars import ContextVar
 from sqlmodel import Session
-from .db_engine import engine
+from .db_context import engine
+
 
 _current_session: ContextVar[Session | None] = ContextVar("_current_session", default=None)
 
