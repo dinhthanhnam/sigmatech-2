@@ -1,8 +1,9 @@
 from services.user_service import UserService
-from services import User
+from models import User
 from typing import Sequence, Optional
-from schemas.user import UserCreate, UserUpdate, UserAuth
+from schemas import UserCreate, UserUpdate, UserAuthRequest
 from utils.crypto import verify_password
+from exceptions import PasswordMismatchedError
 
 class UserServiceImpl(UserService):
 
@@ -40,12 +41,14 @@ class UserServiceImpl(UserService):
     #------------Bussiness--------------
     #------------Auth-------------------
     @classmethod
-    def authenticate_user(cls, payload: UserAuth) -> User | None:
+    def authenticate_user(cls, payload: UserAuthRequest) -> User | None:
         user = User.find_by_email(payload.email)
         if not user:
-            return None
-        auth_user = user if verify_password(payload.password, user.hashed_password) else None
-        return auth_user
+            raise UserNotFoundError()
+        password_matched = verify_password(payload.password, user.hashed_password)
+        if not password_matched:
+            raise PasswordMismatchedError()
+        return user
 
 
 user_service = UserServiceImpl()

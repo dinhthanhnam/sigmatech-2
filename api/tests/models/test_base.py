@@ -1,7 +1,7 @@
 from models.base import Base
 from sqlmodel import SQLModel, Session, create_engine, MetaData, text
 import pytest
-from typing import Optional
+from typing import Optional, cast
 
 test_metadata = MetaData()
 
@@ -9,6 +9,7 @@ class Model(Base, table=True, metadata=test_metadata):
     __tablename__ = "models" # type: ignore
 
     name: str
+    brand: Optional[str] = None
 
 class PartialModel(Base, table=False):
     name: Optional[str]
@@ -22,7 +23,7 @@ def setup_db():
 
 
 def test_create(setup_db):
-    user = Model.create({"name": "abc"}, sess=setup_db)
+    user = Model.create(Model(name='abc', brand='intel'), sess=setup_db)
     setup_db.commit()
     setup_db.refresh(user)
     assert user.id is not None
@@ -33,8 +34,8 @@ def test_create(setup_db):
 def test_create_many(setup_db):
     users = Model.create_many(
         [
-            {"name": "abc"},
-            {"name": "bcd"}
+            Model(name='abc', brand='intel'),
+            Model(name='bcd', brand='intel')
         ],
         sess=setup_db,
     )
@@ -46,8 +47,32 @@ def test_create_many(setup_db):
     assert all(u.id is not None for u in users)
 
 
-def test_select(setup_db):
-    _ = Model.create({"name": "abc"}, sess=setup_db)
+def test_select_only(setup_db):
+    _ = Model.create(Model(name='abc', brand='intel'), sess=setup_db)
     result = Model.query(sess=setup_db).only(Model.id, Model.name).first()
     assert result != None
     assert result.name == "abc"
+
+
+def test_update_one(setup_db):
+    _ = Model.create(Model(name='abc', brand='intel'), sess=setup_db)
+    # result = Model.query().update()
+    result = Model.update_one(1, Model(name='bcd', brand='intel'), sess=setup_db)
+    assert result != None
+    assert isinstance(result, Model)
+    assert result.name == "bcd"
+
+
+def test_update_many(setup_db):
+    _ = Model.create_many(
+        [
+            Model(name='abc', brand='intel'),
+            Model(name='bcd', brand='intel')
+        ], sess=setup_db)
+    updated = Model.update_many(filters=[Model.brand == 'intel', Model.name == 'abc'], data={"name": "xyz"}, sess=setup_db)
+    assert updated != None
+    print(updated)
+    assert isinstance(updated, list)
+    assert len(updated) == 1
+    for item in updated:
+        assert item.name == 'xyz'

@@ -1,5 +1,5 @@
 from services.post_service import PostService
-from services import Post
+from models import Post
 from typing import Sequence, Optional
 from schemas.post import PostCreate
 

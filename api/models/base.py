@@ -1,27 +1,27 @@
-from sqlmodel import SQLModel, Field, select, Session, delete
+from sqlmodel import SQLModel, Field, select, Session, delete, update, case
 from sqlalchemy.orm import load_only
 from pydantic import create_model, BaseModel
-from typing import Optional, Type, TypeVar, Sequence, Generic, Literal, Union
+from typing import Optional, Type, TypeVar, Sequence, Generic, Literal, Union, cast
 from sqlalchemy.orm import selectinload
 from contextlib import contextmanager
 from db import engine
 from datetime import datetime, UTC
+from sqlalchemy import ColumnElement
 
 
 T = TypeVar("T", bound="Base")
 
 
-@contextmanager
-def get_session():
-    with Session(engine) as session:
-        yield session
-
-
 class Base(SQLModel, table=False):
-    id: int = Field(..., primary_key=True)
+    id: Optional[int] = Field(default=None, primary_key=True)
     created_at: datetime = Field(default=datetime.now(UTC))
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None
+
+
+    # @classmethod
+    # def col(cls, name: str) -> ColumnElement:
+    #     return getattr(cls.__table__.c, name) # type: ignore
 
     @classmethod
     def __get_query(cls: Type[T], sess: Session | None = None):
@@ -50,13 +50,37 @@ class Base(SQLModel, table=False):
     def create_many(cls: Type[T], data_list: list[SQLModel] | list[dict], sess: Session | None = None) -> list[T]:
         return cls.query(sess).create_many(data_list)
 
-    @classmethod
-    def update(cls: Type[T], id: int, data: SQLModel | dict, sess: Session | None = None):
-        return cls.query(sess).where(cls.id == id).update(data)
+    # def update(self: T, data: SQLModel | dict, sess: Session | None = None) -> Optional[T]:
+    #     if not self.id:
+    #         raise ValueError("Cannot update unsaved instance (no id)")
+    #     model_cls = type(self)
+    #     payload = data.model_dump() if isinstance(data, SQLModel) else data
+    #     result = model_cls.query(sess).where(model_cls.id == self.id).update(payload)
+    #     if result:
+    #         for k, v in payload.items():
+    #             if hasattr(self, k):
+    #                 setattr(self, k, v)
+    #         self.updated_at = datetime.now(UTC)
+    #     return self
 
     @classmethod
-    def update_many(cls: Type[T], filters: list, data: dict, sess: Session | None = None):
-        return cls.query(sess).where(*filters).update_many(data)
+    def update_one(cls: Type[T], id: int, data: SQLModel | dict, sess: Session | None = None) -> Union[T, None]:
+        updated = cls.query(sess).where(cls.id == id).update(data)
+        if updated:
+            return cast(T, updated[0])
+        else:
+            return None
+
+
+    @classmethod
+    def update_many(cls: Type[T], filters: list, data: dict, sess: Session | None = None) -> Union[Sequence[T], T, None]:
+        return cls.query(sess).where(*filters).update(data)
+
+
+    # @classmethod
+    # def update_bulk(cls: Type[T], filters: list, data: dict, sess: Session | None = None) -> Union[Sequence[T], T, None]:
+    #     return cls.query(sess).
+
 
     @classmethod
     def delete_soft(cls: Type[T], id, sess: Session | None = None):
@@ -104,7 +128,7 @@ class QueryBuilder(Generic[T]):
     def where(self, *conditions):
         self._filters.extend(conditions)
         return self
-    
+
 
     # offset -> lấy bắt đầu từ bản ghi số bao nhiêu
     def offset(self, value: int):
@@ -161,30 +185,61 @@ class QueryBuilder(Generic[T]):
         self._refresh(instance)
         return instances
 
-    def update(self, data: SQLModel | dict ) -> Optional[T]:
-        payload = data.model_dump() if isinstance(data, SQLModel) else data
-        stmt = select(self.model).where(*self._filters)
-        obj = self.session.exec(stmt).first()
-        if not obj:
-            return None
-        for key, value in payload.items():
-            if hasattr(obj, key):
-                setattr(obj, key, value)
-        obj.updated_at = datetime.now(UTC)
+    # def update(self, data: SQLModel | dict ) -> Optional[T]:
+    #     payload = data.model_dump() if isinstance(data, SQLModel) else data
+    #     stmt = select(self.model).where(*self._filters)
+    #     obj = self.session.exec(stmt).first()
+    #     if not obj:
+    #         return None
+    #     for key, value in payload.items():
+    #         if hasattr(obj, key):
+    #             setattr(obj, key, value)
+    #     obj.updated_at = datetime.now(UTC)
+    #     self._commit()
+    #     self._refresh(obj)
+    #     return obj
+    
+    def update(self, data: SQLModel | dict) -> Optional[Sequence[T]]:
+        """Update tất cả bản ghi khớp filter, trả về số bản ghi được cập nhật."""
+        payload = data.model_dump(exclude_none=True) if isinstance(data, SQLModel) else {
+            k: v for k, v in data.items() if v is not None
+        }
+        payload["updated_at"] = datetime.now(UTC)
+        stmt = update(self.model)
+        if self._filters:
+            stmt = stmt.where(*self._filters)
+        stmt = stmt.values(**payload).returning(self.model)
+        result = self.session.exec(stmt)
         self._commit()
-        self._refresh(obj)
-        return obj
+        rows = result.fetchall()
+        if rows:
+            return cast(list[T], [row[0] for row in rows])
+        return None
 
-    def update_many(self, data: dict) -> int:
-        stmt = select(self.model).where(*self._filters)
-        results = self.session.exec(stmt).all()
-        for obj in results:
-            for key, value in data.items():
-                if hasattr(obj, key):
-                    setattr(obj, key, value)
-            obj.updated_at = datetime.now(UTC)
-        self._commit()
-        return len(results)
+
+    # def update_many(self, data: SQLModel | dict) -> int:
+    #     stmt = select(self.model).where(*self._filters)
+    #     results = self.session.exec(stmt).all()
+    #     data = data.model_dump() if isinstance(data, SQLModel) else data
+    #     for obj in results:
+    #         for key, value in data.items():
+    #             if hasattr(obj, key):
+    #                 setattr(obj, key, value)
+    #         obj.updated_at = datetime.now(UTC)
+    #     self._commit()
+    #     return len(results)
+
+    # def update_many(self, data: SQLModel | dict) -> int:
+    #     stmt = select(self.model).where(*self._filters)
+    #     results = self.session.exec(stmt).all()
+    #     data = data.model_dump() if isinstance(data, SQLModel) else data
+    #     for obj in results:
+    #         for key, value in data.items():
+    #             if hasattr(obj, key):
+    #                 setattr(obj, key, value)
+    #         obj.updated_at = datetime.now(UTC)
+    #     self._commit()
+    #     return len(results)
     
     def delete(self) -> Optional[T]:
         obj = self.session.exec(select(self.model).where(*self._filters)).first()

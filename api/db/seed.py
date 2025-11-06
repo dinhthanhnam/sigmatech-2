@@ -3,7 +3,7 @@ from sqlmodel import Session, select
 from models.user import User
 from models.product import Product
 from models.attribute import Attribute
-from schemas.user import UserCreate
+from schemas.user import UserCreate, UserUpdate
 from schemas.product import ProductCreate, LaptopCreate, MonitorCreate
 
 def seed():

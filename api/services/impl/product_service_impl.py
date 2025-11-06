@@ -1,5 +1,5 @@
 from services.product_service import ProductService
-from services import Product
+from models import Product
 from typing import Sequence, Optional
 from schemas.product import ProductCreate, ProductRead
 

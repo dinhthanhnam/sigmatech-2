@@ -7,6 +7,9 @@ vi:
     not_found: "Không tìm thấy người dùng!"
     email_existed: "Email này đã tồn tại!"
     username_existed: "Tên người dùng đã tồn tại!"
+
+  auth:
+    password_mismatched: "Mật khẩu không khớp!"
   token:
     invalid: "Token không hợp lệ!"
 
