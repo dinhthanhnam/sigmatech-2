@@ -20,7 +20,9 @@ def flatten(product: Product):
 
 
 @router.get(path="",response_model=List[ProductRead])
-def index(page=Query()):
+def index(
+        page: int = Query(1, ge=1)
+    ):
     products = product_service.get_paginated_products(page=page, take=8)
     if not products:
         raise HTTPException(status_code=404, detail=t('common.product.not_found'))

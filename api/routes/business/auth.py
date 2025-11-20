@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
+from fastapi.security import OAuth2PasswordRequestForm
 from services import user_service
 from typing import List
-from schemas import UserCreate, UserRead, UserUpdate, UserAuthRequest
+from schemas import UserCreate, UserRead, UserUpdate, UserAuthRequest, UserAuthResponse
 from models import User
 from typing import Annotated
 from middlewares import get_current_user
@@ -27,8 +28,6 @@ def register_user(
 ):
     try:
         user = user_service.create_user(payload)
-        print(user)
-        print(User.find_by_email("thanhnamak@gmail.com"))
         return user
     except Exception as e:
         if isinstance(e, UniqueConstraintError):
@@ -42,17 +41,17 @@ def register_user(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=t('common.user.username_existed')
                 )
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=t('common.bad_request')
-                )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=t('common.bad_request')
+            )
 
 
 @router.post(path='/login', response_model=UserRead)
 def authenticate_user(
+    response: Response,
     payload: UserAuthRequest,
-    response: Response
 ):
     try:
         user = user_service.authenticate_user(payload)
@@ -78,16 +77,73 @@ def authenticate_user(
         )
 
         return user
-    except PasswordMismatchedError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e)
+    except Exception as e:
+        if isinstance(e, PasswordMismatchedError):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=str(e)
+            )
+        elif isinstance(e, UserNotFoundError):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+
+@router.post(path='/login/form', response_model=UserAuthResponse)
+def authenticate_user_form(
+    response: Response,
+    form_data: OAuth2PasswordRequestForm = Depends()
+):
+    try:
+        payload = UserAuthRequest(email=form_data.username, password=form_data.password)
+        user = user_service.authenticate_user(payload)
+        access_token = create_access_token(user.id) # type: ignore
+        refresh_token = create_refresh_token(user.id) # type: ignore
+
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=True,
+            samesite="lax",
+            max_age=60*60*24*(settings.rt_expire_days or 7)
         )
-    except UserNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+        
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=False,
+            secure=True,
+            samesite="lax",
+            max_age=60*(settings.at_expire_mins or 15)
         )
+
+        return {
+            "user": user,
+            "access_token": access_token,
+            "token_type": "bearer"
+        }
+    except Exception as e:
+        if isinstance(e, PasswordMismatchedError):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=str(e)
+            )
+        elif isinstance(e, UserNotFoundError):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
 
 
 @router.get(path='/refresh')
