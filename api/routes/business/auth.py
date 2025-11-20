@@ -26,7 +26,10 @@ def register_user(
     payload: UserCreate
 ):
     try:
-        return user_service.create_user(payload)
+        user = user_service.create_user(payload)
+        print(user)
+        print(User.find_by_email("thanhnamak@gmail.com"))
+        return user
     except Exception as e:
         if isinstance(e, UniqueConstraintError):
             if e.field == 'email':

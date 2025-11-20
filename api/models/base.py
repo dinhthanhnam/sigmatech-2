@@ -6,7 +6,7 @@ from sqlalchemy.orm import selectinload
 from db import engine
 from datetime import datetime, UTC
 from sqlalchemy import ColumnElement
-from db import get_session
+from db import get_session, engine, test_engine
 
 T = TypeVar("T", bound="Base")
 
@@ -17,15 +17,14 @@ class Base(SQLModel, table=False):
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None
 
-
-    # @classmethod
-    # def col(cls, name: str) -> ColumnElement:
-    #     return getattr(cls.__table__.c, name) # type: ignore
+    @classmethod
+    def __get_session(cls):
+        return get_session()
 
     @classmethod
     def __get_query(cls: Type[T]):
         """Always return a QueryBuilder with a valid session."""
-        return QueryBuilder(cls, get_session())
+        return QueryBuilder(cls, cls.__get_session())
 
     # Main query builder helper
     @classmethod
@@ -39,9 +38,17 @@ class Base(SQLModel, table=False):
     
     # CRUD shortcut dùng QueryBuilder
     @classmethod
+    def find_one(cls: Type[T], filters: list) -> Optional[T]:
+        return cls.query().where(*filters).first()
+    
+    @classmethod
+    def find_many(cls: Type[T], filters: list) -> Optional[Sequence[T]]:
+        return cls.query().where(*filters).all()
+    
+    @classmethod
     def create(cls: Type[T], data: SQLModel | dict) -> T:
         return cls.query().create(data)
-
+    
     @classmethod
     def create_many(cls: Type[T], data_list: list[SQLModel] | list[dict]) -> Sequence[T]:
         return cls.query().create_many(data_list)
@@ -58,9 +65,9 @@ class Base(SQLModel, table=False):
     def update_many(cls: Type[T], filters: list, data: dict) -> Optional[Sequence[T]]:
         return cls.query().where(*filters).update(data)
 
-    # @classmethod
-    # def update_bulk(cls: Type[T], filters: list, data: dict, sess: Session | None = None) -> Union[Sequence[T], T, None]:
-    #     return cls.query(sess).
+    @classmethod
+    def update_bulk(cls: Type[T], data_list: list[SQLModel] | list[dict]) -> int:
+        return cls.query().update_bulk(data_list)
 
     @classmethod
     def delete_soft(cls: Type[T], id) -> Optional[T]:
@@ -70,7 +77,7 @@ class Base(SQLModel, table=False):
         else:
             return None
 
-    
+
     @classmethod
     def delete_hard(cls: Type[T], id):
         return cls.query().where(cls.id == id).delete()
@@ -145,8 +152,8 @@ class QueryBuilder(Generic[T]):
         payload = data.model_dump() if isinstance(data, SQLModel) else data
         instance = self.model(**payload)
         self.session.add(instance)
-        self._commit()
         self.session.flush()
+        self._commit()
         return instance
 
     def create_many(self, data_list: list[SQLModel] | list[dict]) -> Sequence[T]:
@@ -157,24 +164,10 @@ class QueryBuilder(Generic[T]):
             instance = self.model(**(item.model_dump() if isinstance(item, SQLModel) else item))
             instances.append(instance)
         self.session.add_all(instances)
-        self._commit()
         self.session.flush()
+        self._commit()
         return instances
 
-    # def update(self, data: SQLModel | dict ) -> Optional[T]:
-    #     payload = data.model_dump() if isinstance(data, SQLModel) else data
-    #     stmt = select(self.model).where(*self._filters)
-    #     obj = self.session.exec(stmt).first()
-    #     if not obj:
-    #         return None
-    #     for key, value in payload.items():
-    #         if hasattr(obj, key):
-    #             setattr(obj, key, value)
-    #     obj.updated_at = datetime.now(UTC)
-    #     self._commit()
-    #     self._refresh(obj)
-    #     return obj
-    
     def update(self, data: SQLModel | dict) -> Optional[Sequence[T]]:
         """Update tất cả bản ghi khớp filter, trả về số bản ghi được cập nhật."""
         payload = data.model_dump(exclude_none=True) if isinstance(data, SQLModel) else {
@@ -188,11 +181,19 @@ class QueryBuilder(Generic[T]):
         result = self.session.exec(stmt)
         self._commit()
         rows = result.fetchall()
-        if rows:
-            return cast(list[T], [row[0] for row in rows])
-        return None
+        if not rows:
+            return None
+        return cast(list[T], [row[0] for row in rows])
 
 
+    def update_bulk(self, data_list: list[SQLModel] | list[dict]) -> int:
+        payload = [
+            data.model_dump() if isinstance(data, SQLModel) else data
+            for data in data_list
+        ]
+        self.session.bulk_update_mappings(self.model, payload) # type: ignore
+        self.session.commit()
+        return len(payload)
     # def update_many(self, data: SQLModel | dict) -> int:
     #     stmt = select(self.model).where(*self._filters)
     #     results = self.session.exec(stmt).all()
@@ -225,11 +226,11 @@ class QueryBuilder(Generic[T]):
         self._commit()
         return obj
 
-    def delete_many(self) -> int:
-        stmt = delete(self.model).where(*self._filters)
-        result = self.session.exec(stmt)
-        self._commit()
-        return result.rowcount or 0
+    # def delete_many(self) -> int:
+    #     stmt = delete(self.model).where(*self._filters)
+    #     result = self.session.exec(stmt)
+    #     self._commit()
+    #     return result.rowcount or 0
     # ---- Query ----
 
     # all()

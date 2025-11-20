@@ -43,6 +43,7 @@ class UserServiceImpl(UserService):
     @classmethod
     def authenticate_user(cls, payload: UserAuthRequest) -> User | None:
         user = User.find_by_email(payload.email)
+        print(user)
         if not user:
             raise UserNotFoundError()
         print(payload.password)

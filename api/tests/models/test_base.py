@@ -1,8 +1,8 @@
 from models.base import Base
-from sqlmodel import SQLModel, Session, create_engine, MetaData, text
+from sqlmodel import SQLModel, Session
 import pytest
-from typing import Optional, cast
-from db import clear_session, test_engine, set_test_engine, get_session
+from typing import Optional
+from db import clear_session, test_engine, get_session, set_session
 
 
 class Model(Base, table=True):
@@ -14,16 +14,11 @@ class Model(Base, table=True):
 
 @pytest.fixture(autouse=True)
 def setup_db():
-    set_test_engine()
-    Base.metadata.drop_all(test_engine) 
-    Base.metadata.create_all(test_engine)
-    with Session(test_engine) as session:
-        yield session
-        session.rollback()
-        session.close()
-
+    set_session(Session(test_engine))
+    SQLModel.metadata.drop_all(test_engine) 
+    SQLModel.metadata.create_all(test_engine)
+    yield
     clear_session()
-
 
 def test_create():
     user = Model.create(Model(name='abc', brand='intel'))
@@ -74,3 +69,16 @@ def test_update_many():
     assert len(updated) == 1
     for item in updated:
         assert item.name == 'xyz'
+
+
+def test_update_bulk():
+    _ = Model.create_many(
+        [
+            Model(name='abc', brand='intel'),
+            Model(name='bcd', brand='intel')
+        ])
+    updated = Model.update_bulk([{"id": "1","name": "xyz"},{"id": "2","brand": "asus"}])
+    assert updated == 2
+    updated_objs = Model.find_many(filters=[Model.id.in_([1,2])])
+    assert updated_objs[0].name == "xyz"
+    assert updated_objs[1].brand == "asus"
