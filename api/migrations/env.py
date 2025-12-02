@@ -31,6 +31,11 @@ target_metadata = SQLModel.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+def include_object(obj, name, type_, reflected, compare_to):
+    # ignore type change cho cột created_at, updated_at
+    if type_ == "column" and name in ("created_at", "updated_at", "deleted_at"):
+        return False
+    return True
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -72,7 +77,7 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection, target_metadata=target_metadata, include_object=include_object
         )
 
         with context.begin_transaction():

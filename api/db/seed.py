@@ -2,6 +2,7 @@ from sqlmodel import Session, select
 from models.user import User
 from models.product import Product
 from models.attribute import Attribute
+from models.test import Test
 from schemas.user import UserCreate, UserUpdate
 from schemas.product import ProductCreate, LaptopCreate, MonitorCreate
 from db import transactional
@@ -28,6 +29,8 @@ def seed():
     Product.create(
         MonitorCreate(name="Monitor 1", model="ASUS01", mon_size="14inch")
     )
-
+    Test.create_many(
+        [Test(name="Test Entry 1"), Test(name="Test Entry 2"), Test(name="Test Entry 3")]
+    )
 if __name__ == "__main__":
     seed()

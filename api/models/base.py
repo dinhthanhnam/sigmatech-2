@@ -4,8 +4,8 @@ from pydantic import create_model, BaseModel
 from typing import Optional, Type, TypeVar, Sequence, Generic, Literal, Union, cast
 from sqlalchemy.orm import selectinload
 from db import engine
-from datetime import datetime, UTC
-from sqlalchemy import ColumnElement
+from datetime import datetime, timezone
+from sqlalchemy import Column, DateTime
 from db import get_session, engine, test_engine
 
 T = TypeVar("T", bound="Base")
@@ -13,9 +13,14 @@ T = TypeVar("T", bound="Base")
 
 class Base(SQLModel, table=False):
     id: Optional[int] = Field(default=None, primary_key=True)
-    created_at: datetime = Field(default=datetime.now(UTC))
-    updated_at: Optional[datetime] = None
-    deleted_at: Optional[datetime] = None
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)}
+    )
+    deleted_at: Optional[datetime] = Field(default_factory=None)
 
     @classmethod
     def __get_session(cls):

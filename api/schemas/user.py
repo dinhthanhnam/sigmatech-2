@@ -7,7 +7,7 @@ class UserCreate(BaseSchema):
     username: str = Field(..., description=Description.User.username, examples=Example.User.username, min_length=8, max_length=20)
     email: EmailStr = Field(..., description=Description.User.email, examples=Example.User.email)
     password: str = Field(..., description=Description.User.password, examples=Example.User.password, min_length=8, max_length=20)
-
+    is_superuser: Optional[bool] = False
 
 class UserRead(BaseReadSchema):
     id: int

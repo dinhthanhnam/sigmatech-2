@@ -24,7 +24,7 @@ class AuthStrategy:
             return True
         elif self.auth_type == AuthType.BEARER_TOKEN:
             decoded = decode_token(credential)
-            user = User.find_by_id(decoded["sub"])
+            user = User.find_by_id(int(decoded["sub"]))
             request.state.user = user
             print(user)
             return user is not None

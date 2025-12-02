@@ -11,7 +11,7 @@ def create_access_token(subject: int, expires_delta: Optional[timedelta] = None)
     now = datetime.now()
     exp = now + (expires_delta or timedelta(minutes=settings.at_expire_mins)) # type: ignore
     payload = {
-        "sub": subject,
+        "sub": str(subject),
         "exp": exp,
         "iat": now,
         "typ": "access",
@@ -24,7 +24,7 @@ def create_refresh_token(subject: int, expires_delta: Optional[timedelta] = None
     exp = now + (expires_delta or timedelta(days=settings.rt_expire_days)) # type: ignore
     jti = str(uuid.uuid4())
     payload = {
-        "sub": subject,
+        "sub": str(subject),
         "exp": exp,
         "iat": now,
         "typ": "refresh",
