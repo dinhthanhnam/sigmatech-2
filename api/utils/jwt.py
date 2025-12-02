@@ -34,7 +34,7 @@ def create_refresh_token(subject: int, expires_delta: Optional[timedelta] = None
     RefreshToken.create(RefreshToken(user_id=subject, jti=jti, token_hash=hash(rt), expires_at=exp))
     return rt # type: ignore
 
-def decode_token(token: str):
+def decode_token(token: str) -> dict:
     return jwt.decode(token, settings.secret_key, algorithms=[settings.jwt_algorithm]) # type: ignore
 
 def get_claims(token: str) -> dict:

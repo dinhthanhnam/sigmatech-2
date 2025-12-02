@@ -1,15 +1,16 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends, Request
 from schemas.user import UserRead
 from services.impl.user_service_impl import user_service
 from typing import List
 from schemas.user import UserCreate, UserUpdate
-
+from core.security import AuthManager
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
-@router.get(path='/',response_model=List[UserRead])
-def index(page: int = Query(1, ge=1)):
+@router.get(path='/',response_model=List[UserRead], dependencies=[Depends(AuthManager())])
+def index(request: Request, page: int = Query(1, ge=1)):
+    # print(request.state.user)
     return user_service.get_paginated_users(page=page, take=8)
 
 

@@ -6,8 +6,8 @@ services:
     container_name: sigmatech2-api
     ports:
       - "8000:8000"
-    depends_on:
-      - db
+    # depends_on:
+    #   - db
     volumes:
       - ./api:/var/app
     working_dir: /var/app
@@ -23,18 +23,20 @@ services:
       - ./web:/var/app
     working_dir: /var/app
 
-  db:
-    image: mysql:8.4
-    container_name: sigmatech2-db
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: sigmatech2
-      MYSQL_USER: sigmatech2
-      MYSQL_PASSWORD: sigmatech2
-    volumes:
-      - mysql_data:/var/lib/mysql
-    ports:
-      - "5000:3306"
+#   For cloning purposes only, uncomment these lines.
+#   Current usage, postgresql is hosted independently outside the orchestration.
 
-volumes:
-  mysql_data:
+#   db:
+#     image: postgres:16
+#     container_name: sigmatech2-db
+#     environment:
+#       POSTGRES_PASSWORD: postgres
+#       POSTGRES_DB: sigmatech2
+#       POSTGRES_USER: sigmatech2
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+#     ports:
+#       - "5000:5432"
+
+# volumes:
+#   postgres_data:

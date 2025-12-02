@@ -9,6 +9,7 @@ vi:
     username_existed: "Tên người dùng đã tồn tại!"
 
   auth:
+    unauthorized: "Không được phép truy cập!"
     password_mismatched: "Mật khẩu không khớp!"
     user_not_found: "Thông tin đăng nhập không khớp!"
   token:

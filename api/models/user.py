@@ -26,6 +26,11 @@ class User(Base, table=True):
         return cls.query().where(cls.email == email).first()
 
 
+    @classmethod
+    def find_by_username(cls: Type[T], username: str) -> Optional[T]:
+        return cls.query().where(cls.username == username).first()
+
+
     # override
     @classmethod
     def create(cls: Type[T], data: SQLModel | dict) -> Optional[T]:

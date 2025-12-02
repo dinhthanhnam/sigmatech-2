@@ -17,7 +17,8 @@ def seed():
         ]
     )
     User.create_many([
-            UserCreate(username="admin123", email="admin@example.com", password="12345678"),
+            UserCreate(username="nextserver", email="nextserver@internal.dev", password="12345678", is_superuser=True),
+            UserCreate(username="admin123", email="admin@example.com", password="12345678", is_superuser=True),
             UserCreate(username="user1234", email="user1@example.com", password="12345678"),
         ]
     )
