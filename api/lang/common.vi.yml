@@ -10,6 +10,7 @@ vi:
 
   auth:
     unauthorized: "Không được phép truy cập!"
+    forbidden: "Bị từ chối truy cập!"
     password_mismatched: "Mật khẩu không khớp!"
     user_not_found: "Thông tin đăng nhập không khớp!"
   token:

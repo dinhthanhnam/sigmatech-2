@@ -1,8 +1,8 @@
 """create_product_attribute_table
 
-Revision ID: c0eef3549562
-Revises: 234194600610
-Create Date: 2025-12-03 02:06:26.525185
+Revision ID: 914b38b8fe04
+Revises: 12d9eedabe64
+Create Date: 2025-12-04 18:23:29.557020
 
 """
 from typing import Sequence, Union
@@ -13,8 +13,8 @@ import sqlalchemy as sa
 import sqlmodel
 
 # revision identifiers, used by Alembic.
-revision: str = 'c0eef3549562'
-down_revision: Union[str, Sequence[str], None] = '234194600610'
+revision: str = '914b38b8fe04'
+down_revision: Union[str, Sequence[str], None] = '12d9eedabe64'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
