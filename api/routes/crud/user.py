@@ -14,9 +14,9 @@ def index(request: Request, page: int = Query(1, ge=1)):
     return user_service.get_paginated_users(page=page, take=8)
 
 
-@router.get(path='/{user_id}',response_model=UserRead)
-def show(user_id: int):
-    return user_service.get_user_by_id(user_id)
+@router.get(path='/{id}',response_model=UserRead)
+def show(id: int):
+    return user_service.get_user_by_id(id)
 
 
 @router.post(path='/',response_model=UserRead)
@@ -24,11 +24,11 @@ def store(payload: UserCreate):
     return user_service.create_user(payload)
 
 
-@router.patch('/{user_id}', response_model=UserRead)
-def update(user_id: int, payload: UserUpdate):
-    return user_service.update_user(user_id, payload)
+@router.patch('/{id}', response_model=UserRead, dependencies=[Depends(AuthManager(ApiBindingScope.BIND_TO_USER))])
+def update(id: int, payload: UserUpdate):
+    return user_service.update_user(id, payload)
 
 
-@router.delete('/{user_id}', response_model=UserRead)
-def destroy(user_id: int):
-    return user_service.delete_user(user_id)
+@router.delete('/{id}', response_model=UserRead, dependencies=[Depends(AuthManager(ApiBindingScope.SUPERUSER_ONLY))])
+def destroy(id: int):
+    return user_service.delete_user(id)

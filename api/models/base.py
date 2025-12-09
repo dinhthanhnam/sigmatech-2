@@ -76,7 +76,7 @@ class Base(SQLModel, table=False):
 
     @classmethod
     def delete_soft(cls: Type[T], id) -> Optional[T]:
-        deleted = cls.query().where(cls.id == id).update({"deleted_at": datetime.now(UTC)})
+        deleted = cls.query().where(cls.id == id).update({"deleted_at": datetime.now(timezone.utc)})
         if deleted:
             return cast(T, deleted[0])
         else:
@@ -99,12 +99,14 @@ class QueryBuilder(Generic[T]):
         self._order_by = []
         self._group_by = []
         self.session = session
-        self.auto_commit = True
+        # self.auto_commit = True
 
 
     def _commit(self):
-        if self.auto_commit and not self.session.in_transaction():
-            self.session.commit()
+        session = self.session
+        if getattr(session, "_in_manual_transaction", False):
+            return
+        session.commit()
 
 
     def only(self, *fields):
@@ -178,7 +180,7 @@ class QueryBuilder(Generic[T]):
         payload = data.model_dump(exclude_none=True) if isinstance(data, SQLModel) else {
             k: v for k, v in data.items() if v is not None
         }
-        payload["updated_at"] = datetime.now(UTC)
+        payload["updated_at"] = datetime.now(timezone.utc)
         stmt = update(self.model)
         if self._filters:
             stmt = stmt.where(*self._filters)
@@ -197,7 +199,7 @@ class QueryBuilder(Generic[T]):
             for data in data_list
         ]
         self.session.bulk_update_mappings(self.model, payload) # type: ignore
-        self.session.commit()
+        self._commit()
         return len(payload)
     # def update_many(self, data: SQLModel | dict) -> int:
     #     stmt = select(self.model).where(*self._filters)

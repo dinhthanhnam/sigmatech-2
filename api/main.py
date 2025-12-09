@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware import Middleware
+from fastapi.security import HTTPBearer, APIKeyHeader, OAuth2PasswordBearer
 from routes import user_crud_router, product_crud_router, auth_router
 from deps import auth_deps
 from models import User
