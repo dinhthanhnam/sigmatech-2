@@ -1,12 +1,15 @@
 from sqlmodel import SQLModel, Field, select, Session, delete, update, case
 from sqlalchemy.orm import load_only
 from pydantic import create_model, BaseModel
-from typing import Optional, Type, TypeVar, Sequence, Generic, Literal, Union, cast
+from typing import Optional, Type, TypeVar, Sequence, Generic, Literal, Union, cast, overload
 from sqlalchemy.orm import selectinload
 from db import engine
 from datetime import datetime, timezone
 from sqlalchemy import Column, DateTime
 from db import get_session, engine, test_engine
+from exceptions import ModelValidationError
+from fastapi import HTTPException, status
+
 
 T = TypeVar("T", bound="Base")
 
@@ -65,7 +68,7 @@ class Base(SQLModel, table=False):
             return cast(T, updated[0])
         else:
             return None
-
+    
     @classmethod
     def update_many(cls: Type[T], filters: list, data: dict) -> Optional[Sequence[T]]:
         return cls.query().where(*filters).update(data)
@@ -86,6 +89,30 @@ class Base(SQLModel, table=False):
     @classmethod
     def delete_hard(cls: Type[T], id):
         return cls.query().where(cls.id == id).delete()
+    
+    
+    @overload
+    @classmethod
+    def to_schema(cls: Type[T], data: T) -> T: ...
+    
+    @overload
+    @classmethod
+    def to_schema(cls: Type[T], data: Sequence[T]) -> Sequence[T]: ...
+    
+
+    @classmethod
+    def to_schema(cls: Type[T], data: Sequence[T] | T) -> Sequence[T] | T:
+        try:
+            result = None
+            if not data:
+                raise ModelValidationError()
+            if isinstance(data, Sequence):
+                result = [super().model_validate(item) for item in data]
+            else:
+                result = super().model_validate(data)
+            return result
+        except ModelValidationError as e:
+            raise RuntimeError(str(e))
 
 
 class QueryBuilder(Generic[T]):
@@ -107,6 +134,13 @@ class QueryBuilder(Generic[T]):
         if getattr(session, "_in_manual_transaction", False):
             return
         session.commit()
+
+
+    def _refresh(self, instance: T):
+        session = self.session
+        if getattr(session, "_in_manual_transaction", False):
+            return
+        session.refresh(instance)
 
 
     def only(self, *fields):

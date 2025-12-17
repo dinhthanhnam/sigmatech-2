@@ -1,9 +1,13 @@
+from exceptions import UnauthorizedError
 from services.user_service import UserService
 from models import User
 from typing import Sequence, Optional
 from schemas import UserCreate, UserUpdate, UserAuthRequest
 from utils.crypto import verify_password
 from exceptions import PasswordMismatchedError, UserNotFoundError
+from fastapi import HTTPException, status
+from i18n import t
+
 
 class UserServiceImpl(UserService):
 
@@ -48,7 +52,7 @@ class UserServiceImpl(UserService):
         password_matched = verify_password(payload.password, user.hashed_password)
         if not password_matched:
             raise PasswordMismatchedError()
-        return user
+        return User.to_schema(user)
 
 
 user_service = UserServiceImpl()
