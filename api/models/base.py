@@ -125,6 +125,10 @@ class QueryBuilder(Generic[T]):
         self._offset = value
         return self
 
+    def cursor_after(self, column, value):
+        self._filters.append(column > value)
+        return self
+
     # take -> lấy bao nhiêu 1 lần
     def limit(self, value: int):  # tương đương limit
         self._limit = value
