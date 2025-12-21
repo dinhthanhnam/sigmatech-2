@@ -13,8 +13,8 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @router.get(path='/',response_model=List[UserRead], dependencies=[Depends(AuthManager(ApiBindingScope.SUPERUSER_ONLY))])
-def index(request: Request, page: int = Query(1, ge=1)):
-    return user_service.get_paginated_users(page=page, take=8)
+def index(page: int = Query(1, ge=1)):
+    return User.to_schema(user_service.get_paginated_users(page=page, take=8))
 
 
 @router.get(path='/{id}',response_model=UserRead)
@@ -37,13 +37,11 @@ def update(id: int, payload: UserUpdate, request: Request):
     user: User = request.state.user
     if not user.is_superuser:
         raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail=f'{t("common.auth.forbidden")}',
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f'{t("common.auth.forbidden")}'
         )
 
     return user_service.update_user(id, payload)
-        
-    
 
 
 @router.delete('/{id}', response_model=UserRead, dependencies=[Depends(AuthManager(ApiBindingScope.SUPERUSER_ONLY))])

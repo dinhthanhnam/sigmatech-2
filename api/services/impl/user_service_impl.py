@@ -52,7 +52,7 @@ class UserServiceImpl(UserService):
         password_matched = verify_password(payload.password, user.hashed_password)
         if not password_matched:
             raise PasswordMismatchedError()
-        return User.to_schema(user)
+        return user
 
 
 user_service = UserServiceImpl()

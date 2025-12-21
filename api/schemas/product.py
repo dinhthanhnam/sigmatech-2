@@ -4,6 +4,9 @@ from .base import BaseSchema, BaseReadSchema, BaseUpdateSchema
 from fastapi import Body
 
 
+ProductType = Literal["laptop", "monitor"]
+
+
 class BaseAttribute(BaseSchema):
     name: str
     model: str
@@ -21,12 +24,12 @@ class ProductBaseUpdate(BaseUpdateSchema):
 class LaptopAttribute(BaseAttribute):
     lap_size: str
     mon_size: str
-    type: Literal["laptop"]
+    type: ProductType = "laptop"
 
 
 class MonitorAttribute(BaseAttribute):
     mon_size: str
-    type: Literal["monitor"]
+    type: ProductType = "monitor"
 
 
 class LaptopRead(ProductBaseRead, LaptopAttribute):
@@ -38,24 +41,24 @@ class MonitorRead(ProductBaseRead, MonitorAttribute):
 
 
 class LaptopCreate(LaptopAttribute):
-    type: Literal["laptop"] = "laptop"
+    type: ProductType = "laptop"
     pass
 
 
 class MonitorCreate(MonitorAttribute):
-    type: Literal["monitor"] = "monitor"
+    type: ProductType = "monitor"
     pass
 
 
 class LaptopUpdate(ProductBaseUpdate):
     lap_size: Optional[str] = None
     mon_size: Optional[str] = None
-    type: Literal["laptop"]
+    type: ProductType = "laptop"
 
 
 class MonitorUpdate(ProductBaseUpdate):
     mon_size: Optional[str] = None
-    type: Literal["laptop"]
+    type: ProductType = "monitor"
 
 
 ProductRead = Annotated[Union[LaptopRead, MonitorRead], Body(discriminator="type")]

@@ -11,6 +11,7 @@ from exceptions import UniqueConstraintError
 from utils.jwt import create_access_token, create_refresh_token, decode_token
 from core.config import settings
 from exceptions import PasswordMismatchedError, UserNotFoundError
+from core.security import ApiBindingScope, AuthManager
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -48,7 +49,7 @@ def register_user(
             )
 
 
-@router.post(path='/login', response_model=UserRead)
+@router.post(path='/login', response_model=UserRead, dependencies=[Depends(AuthManager(ApiBindingScope.PUBLIC))])
 def authenticate_user(
     response: Response,
     payload: UserAuthRequest,
@@ -75,8 +76,7 @@ def authenticate_user(
             samesite="lax",
             max_age=60*(settings.at_expire_mins or 15)
         )
-
-        return user
+        return User.to_schema(user)
     except Exception as e:
         if isinstance(e, PasswordMismatchedError):
             raise HTTPException(
@@ -124,7 +124,7 @@ def authenticate_user_form(
         )
 
         return {
-            "user": user,
+            "user": User.to_schema(user),
             "access_token": access_token,
             "token_type": "bearer"
         }
