@@ -1,2 +1,2 @@
 export * from './marquee'
-export * from './app-header'
+export * from './AppHeader'
