@@ -1,8 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "@fontsource-variable/inter";
 
 @custom-variant dark (&:is(.dark *));
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -41,6 +41,16 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+	--color-primary-50: var(--color-cellphones-50);
+	--color-primary-100: var(--color-cellphones-100);
+	--color-primary-200: var(--color-cellphones-200);
+	--color-primary-300: var(--color-cellphones-300);
+	--color-primary-400: var(--color-cellphones-400);
+	--color-primary-500: var(--color-cellphones-500);
+	--color-primary-600: var(--color-cellphones-600);
+	--color-primary-700: var(--color-cellphones-700);
+	--color-primary-800: var(--color-cellphones-800);
+	--color-primary-900: var(--color-cellphones-900);
 }
 
 :root {
@@ -76,6 +86,16 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --color-cellphones-50: #fbe6e8;
+  --color-cellphones-100: #f3b0b7;
+  --color-cellphones-200: #ed8a95;
+  --color-cellphones-300: #e45464;
+  --color-cellphones-400: #df3346;
+  --color-cellphones-500: #d70018;
+  --color-cellphones-600: #c40016;
+  --color-cellphones-700: #901;
+  --color-cellphones-800: #76000d;
+  --color-cellphones-900: #5a000a;
 }
 
 .dark {
@@ -116,7 +136,35 @@
   * {
     @apply border-border outline-ring/50;
   }
+	html {
+		font-family: "Inter Variable", sans-serif;
+	}
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
+}
+
+@layer utilities {
+	@keyframes scroll-left-infinite {
+		0% {
+			transform: translate(0);
+		}
+		100% {
+			transform: translate(calc(-50% - 12px));
+		}
+	}
+	.animate-scroll-left-infinite {
+		animation: scroll-left-infinite 16s linear infinite;
+	}
+}
+.common-container {
+  @apply flex mx-auto w-full max-w-screen-xl;
+}
+
+.app-header {
+	@apply from-primary-300 to-primary-500 bg-linear-to-b text-white p-2 sticky shrink-0;
+}
+
+.app-content {
+	@apply flex-1 overflow-y-auto;
 }
