@@ -1,6 +1,6 @@
 import Marquee from "./marquee";
 import Logo from "./logo";
-import { CategoryPopoverTrigger, LocationPopoverTrigger } from "./popovers";
+import { CategoryPopoverTrigger, LocationPopoverTrigger, CategoryPopover } from "./popovers";
 import { LoginButton } from "./buttons";
 import { HeaderSearchInput } from "./search-input";
 
@@ -11,14 +11,16 @@ const HeaderLayout = {
 export function AppHeader() {
   return (
     <header className="app-header">
-      <div className={HeaderLayout.Root}>
-        <Marquee />
-        <div className={HeaderLayout.Main}>
-          <Logo />
-          <CategoryPopoverTrigger />
-          <LocationPopoverTrigger />
-          <HeaderSearchInput />
-          <LoginButton />
+      <div className="common-container">
+        <div className={HeaderLayout.Root}>
+          <Marquee />
+          <div className={HeaderLayout.Main}>
+            <Logo />
+            <CategoryPopover />
+            <LocationPopoverTrigger />
+            <HeaderSearchInput />
+            <LoginButton />
+          </div>
         </div>
       </div>
     </header>

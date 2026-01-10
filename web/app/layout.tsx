@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import {AppHeader, AppContent} from "@/components/partials";
+import { AppOverlay } from "@/components/partials/content/AppOverlay";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -20,6 +21,7 @@ export default function RootLayout({
           {/*App header*/}
           <AppHeader/>
           {/*App content*/}
+          <AppOverlay />
           <AppContent>
             {children}
           </AppContent>

@@ -1,2 +1,2 @@
-export * from './category-popover/category-popover-trigger';
+export * from './category-popover';
 export * from './location-popover/location-popover-trigger';

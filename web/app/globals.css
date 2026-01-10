@@ -159,7 +159,7 @@
 	}
 }
 .common-container {
-  @apply flex mx-auto w-full max-w-screen-xl;
+  @apply flex mx-auto w-full max-w-[1180px];
 }
 
 .app-header {
